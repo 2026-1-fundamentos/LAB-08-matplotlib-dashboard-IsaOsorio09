@@ -2,72 +2,7 @@
 """
 Escriba el codigo que ejecute la accion solicitada.
 """
-import matplotlib.pyplot as plt
-import pandas as pd
-from pathlib import Path
-import webbrowser
 
-def load_data(data_path):
-    """
-    Load the shipping data from the CSV file.
-    """
-    return pd.read_csv(data_path)
-
-def create_visual_shipping_per_warehouse(df, docs_path):
-    """
-    Create a bar chart showing the number of shipments per warehouse block.
-    """
-    plt.figure(figsize=(10, 6))
-    df['Warehouse_block'].value_counts().plot(kind='bar', color='tab:blue', fontsize=8)
-    plt.title('Number of Shipments per Warehouse Block')
-    plt.xlabel('Warehouse Block')
-    plt.ylabel('Record Count')
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-    plt.savefig(docs_path / 'shipping_per_warehouse.png')
-    plt.close()
-
-def create_visual_for_shipping_mode(df, docs_path):
-    """
-    Create a bar chart showing the number of shipments per mode of shipment.
-    """
-    plt.figure(figsize=(10, 6))
-    df['Mode_of_Shipment'].value_counts().plot(kind='pie', colors=['tab:blue', 'tab:orange', 'tab:green'], wedgeprops=dict(width=0.35))
-    plt.title('Mode of Shipment')
-    plt.ylabel('')  # Hide the y-label for pie chart
-    plt.savefig(docs_path / 'mode_of_shipment.png')
-    plt.close()
-
-def create_visual_for_average_customer_rating(df, docs_path):
-    df = df.copy()
-    df = (df[['Mode_of_Shipment', 'Customer_rating']].groupby('Mode_of_Shipment').describe())
-    df.columns = df.columns.droplevel()
-    df = df[['mean', 'max', 'min']]
-    plt.figure(figsize=(10, 6))
-    plt.barh(y=df.index.values, width=df['max'].values-1, left=df['min'].values, color='lightgray', alpha=0.8, height=0.9)
-    plt.title('Average Customer Rating')
-    colors = ['tab:green' if x > 3 else 'tab:orange' for x in df['mean'].values]
-    plt.barh(y=df.index.values, width=df['mean'].values-1, left=df['min'].values, color=colors, alpha=1, height=0.5)
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-    plt.gca().spines['left'].set_color('gray')
-    plt.gca().spines['bottom'].set_color('gray') 
-    plt.savefig(docs_path / 'average_customer_rating.png')
-    plt.close()
-
-def create_visual_for_weight_distribution(df, docs_path):
-    """
-    Create a histogram showing the distribution of weights in grams.
-    """
-    plt.figure(figsize=(10, 6))
-    df['Weight_in_gms'].plot(kind='hist', color='tab:orange', edgecolor='white')
-    plt.title('Shipped Weights Distribution')
-    plt.xlabel('Weight (gms)')
-    plt.ylabel('Frequency')
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-    plt.savefig(docs_path / 'weight_distribution.png')
-    plt.close()
 
 def pregunta_01():
     """
@@ -93,27 +28,124 @@ def pregunta_01():
 
     Tenga en cuenta los siguientes cambios respecto al video:
 
-    * El archivo de datos se encuentra en la carpeta `data`., files input
+    * El archivo de datos se encuentra en la carpeta `data`.
 
     * Todos los archivos debe ser creados en la carpeta `docs`.
 
     * Su código debe crear la carpeta `docs` si no existe.
 
     """
-    data_path = Path(__file__).parent.parent / "files" / "input" / "shipping-data.csv"
-    docs_path = Path(__file__).parent.parent / "docs"
+    import os
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    
+    os.makedirs("docs", exist_ok=True)
+    
+    def load_data():
+        df = pd.read_csv("files/input/shipping-data.csv")
+        return df
+    
+    
+    def create_visual_for_shipping_per_warehouse(df):
+        df = df.copy()
+        plt.figure()
+        counts = df.Warehouse_block.value_counts()
+        counts.plot.bar(
+            title="Shipping per Warehouse",
+            xlabel="Warehouse block",
+            ylabel="Record Count",
+            color="tab:blue",
+            fontsize=8,
+        )
+        plt.gca().spines["top"].set_visible(False)
+        plt.gca().spines["right"].set_visible(False)
+        plt.savefig("docs/shipping_per_warehouse.png")
+    
+    def create_visual_for_mode_of_shipment(df):
+        df = df.copy()
+        plt.figure()
+        counts = df.Mode_of_Shipment.value_counts()
+        counts.plot.pie(
+            title = "Mode of shipment",
+            wedgeprops = dict(width=0.35),
+            ylabel="",
+            colors=["tab:blue","tab:orange","tab:green"],
+        )
+        plt.savefig("docs/mode_of_shipment.png")
+        
+    def create_visual_for_average_customer_rating(df):
+        df = df.copy()
+        plt.figure()
+        df = (
+            df[["Mode_of_Shipment","Customer_rating"]]
+            .groupby("Mode_of_Shipment")
+            .describe()
+        )
+        df.columns = df.columns.droplevel()
+        df = df[["mean", "min", "max"]]
+        plt.barh(
+            y=df.index.values,
+            width=df["max"].values - 1,
+            left=df["min"].values,
+            height=0.9,
+            color="lightgray",
+            alpha=0.8,
+        )
+        colors = [
+            "tab:green" if value >= 3.0 else "tab:orange" for value in df["mean"].values
+        ]
+        
+        plt.barh(
+            y=df.index.values,
+            width=df["mean"].values - 1,
+            left=df["min"].values,
+            color=colors,
+            height=0.5,
+            alpha=1.0
+        )
+        plt.title("Average Customer Rating")
+        plt.gca().spines["left"].set_color("gray")
+        plt.gca().spines["bottom"].set_color("gray")
+        plt.gca().spines["top"].set_visible(False)
+        plt.gca().spines["right"].set_visible(False)
+        plt.savefig("docs/average_customer_rating.png")
+    
+    def create_visual_for_weight_distribution(df):
+        df = df.copy()
+        plt.figure()
+        df.Weight_in_gms.plot.hist(
+            title="Shipped Weight Distribution",
+            color="tab:orange",
+            edgecolor="white",
+        )  
+        plt.gca().spines["top"].set_visible(False)
+        plt.gca().spines["right"].set_visible(False)
+        plt.savefig("docs/weight_distribution.png")
+        
+    df = load_data()
+    create_visual_for_shipping_per_warehouse(df)
+    create_visual_for_mode_of_shipment(df)
+    create_visual_for_average_customer_rating(df)
+    create_visual_for_weight_distribution(df)
+        
+    with open("docs/index.html", "w") as archivo:
+        archivo.write("""
+                <!DOCTYPE html>
+                <html>
+                <body>
 
-    # Create the docs directory if it doesn't exist
-    docs_path.mkdir(exist_ok=True)
-    df = load_data(data_path)
+                <h1>Shipping Dashboard Example</h1>
 
-    create_visual_shipping_per_warehouse(df, docs_path)
-    create_visual_for_shipping_mode(df, docs_path)
-    create_visual_for_average_customer_rating(df, docs_path)
-    create_visual_for_weight_distribution(df, docs_path)
-    webbrowser.open((docs_path / 'index.html').as_uri())  # Open the index.html file in the default web browser
-    return df
+                <div style="width:45%;float:left">
+                    <img src="shipping_per_warehouse.png" alt="Fig 1">
+                    <img src="code_of_shipment.png" alt="Fig 2">
+                </div>
 
-if __name__ == "__main__":
-    df = pregunta_01()
-    print(df.head())
+                <div style="width:45%;float:left">
+                    <img src="average_customer_rating.png" alt="Fig 3">
+                    <img src="weight_distribution.png" alt="Fig 4">
+                </div>
+
+                </body>
+                </html>
+                """)
